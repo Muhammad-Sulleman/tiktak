@@ -9,9 +9,9 @@ services:
       context: ./fastapi  # Points to the folder where your Dockerfile and code live
       dockerfile: fastapi.dockerfile  # You’ll create this file below
     ports:
-      - "8000:8000"
+      - "4000:4000"
     environment:
-      - DATABASE_URI=postgresql://postgres:postgres@db:5432/postgres
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/fastapi
     depends_on:
       - db
 
@@ -21,7 +21,8 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_DB: fastapi
+      
     ports:
       - "5432:5432"
     volumes:

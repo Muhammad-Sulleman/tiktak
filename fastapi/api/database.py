@@ -12,14 +12,14 @@ DATABASE_URL = os.getenv(
 )
 
 # 1. Async engine
-engine: AsyncEngine = create_async_engine(
+async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
     echo=True,  # logs SQL queries
 )
 
 # 2. Session factory
 AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
+    bind=async_engine,
     class_=AsyncSession,
     expire_on_commit=False,  # avoid lazy reload after commits :contentReference[oaicite:1]{index=1}
 )
