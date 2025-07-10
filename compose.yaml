@@ -4,6 +4,8 @@
 services:
   fastapiapp:
     container_name: fastapiapp
+    env_file:
+      - .env
     image: fastapiapp:1.0.0
     build:
       context: ./fastapi  # Points to the folder where your Dockerfile and code live
@@ -11,7 +13,7 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/fastapi
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/fastapi
     depends_on:
       - db
 

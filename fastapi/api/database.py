@@ -3,27 +3,23 @@
 import os
 from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@db:5432/fastapi"
+    "postgresql+psycopg2://postgres:postgres@db:5432/fastapi"
 )
 
 # 1. Async engine
-async_engine: AsyncEngine = create_async_engine(
+engine = create_engine(
     DATABASE_URL,
     echo=True,  # logs SQL queries
 )
 
 # 2. Session factory
-AsyncSessionLocal = async_sessionmaker(
-    bind=async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,  # avoid lazy reload after commits :contentReference[oaicite:1]{index=1}
-)
-
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # 3. Base for models
 Base = declarative_base()
 

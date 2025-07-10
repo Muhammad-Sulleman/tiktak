@@ -15,6 +15,9 @@ router=APIRouter(
 )
 SECRET_KEY=os.getenv('AUTH_SECRET_KEY')
 ALGORITHM=os.getenv('AUTH_ALGORITHM')
+print(f"SECRET_KEY: {SECRET_KEY}")
+print(f"ALGORITHM: {ALGORITHM}")
+
 #pydantic request for checking type of requests
 class UserCreateRequest(BaseModel):
     username:str
@@ -28,7 +31,7 @@ def AuthenticateUser(username:str,password:str,db):
     user=db.query(User).filter(User.username==username).first()
     if not user :
         return False
-    if not brypt_context.verify(password,User.hashed_password):
+    if not brypt_context.verify(password,user.hashed_password):
         return False
     return user
  
@@ -39,7 +42,7 @@ def CreateAccessToken(username:str,userId:str,expires_delta:timedelta):
     }
     expires=datetime.now(timezone.utc)+expires_delta
     encode.update(  {'exp':expires})
-    return jwt.encode(encode,SECRET_KEY,algorithm=ALGORITHM)
+    return jwt.encode(encode,SECRET_KEY,algorithm='HS256')
 @router.post('/',status_code=status.HTTP_201_CREATED)
 async def create_user(db:db_dependency,create_user_request:UserCreateRequest):
     create_user_model=User(
@@ -50,7 +53,7 @@ async def create_user(db:db_dependency,create_user_request:UserCreateRequest):
     db.commit()
 @router.post('/token',response_model=Token)
 async def login_for_access_token(formData:Annotated[OAuth2PasswordRequestForm,Depends()],db:db_dependency):
-    user=AuthenticateUser(formData.username,formData.passowrd,db)
+    user=AuthenticateUser(formData.username,formData.password,db)
     if not user :
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     token=CreateAccessToken(user.username,user.id,timedelta(minutes=20))

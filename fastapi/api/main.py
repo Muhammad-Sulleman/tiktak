@@ -1,44 +1,47 @@
+# fastapi/api/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import Base, async_engine
-
-from .routers import auth
-from contextlib import asynccontextmanager
-from api.database import async_engine, Base
-from contextlib import asynccontextmanager
 from sqlalchemy.exc import OperationalError
-import asyncio
-async def lifespan(app):
+from time import sleep
+from .database import engine, Base  # sync engine
+from .routers import auth
+from .routers import workouts 
+from .routers import routines
+# 🔁 Function to initialize DB (sync version)
+def init_db_with_retry():
     max_tries = 10
     for attempt in range(max_tries):
         try:
-            async with async_engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
+            Base.metadata.create_all(bind=engine)
             print("✅ Database is ready and tables created.")
-            break
+            return
         except OperationalError as e:
             print(f"❌ Attempt {attempt+1}: DB not ready yet. Retrying in 2s...")
-            await asyncio.sleep(2)
-    else:
-        raise Exception("❌ Could not connect to DB after retries.")
-    
-    yield # This yields control to the app
+            sleep(2)
+    raise Exception("❌ Could not connect to DB after retries.")
 
-    # (Optional) This runs on shutdown
-    # You can add cleanup code here if needed
+# 🔁 Initialize DB
+init_db_with_retry()
 
-app = FastAPI(lifespan=lifespan)
+# ✅ Create FastAPI app
+app = FastAPI()
 
-
+# ✅ Add CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http:localhost:3000"],
+    allow_origins=["http://localhost:3000"],  # fixed URL format
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
-    
 )
-@app.get('/')
+
+# ✅ Health check route
+@app.get("/")
 def health_check():
-    return "health check complete"
+    return "Health check complete ✅"
+
+# ✅ Include routers
 app.include_router(auth.router)
+app.include_router(workouts.router)
+app.include_router(routines.router)
